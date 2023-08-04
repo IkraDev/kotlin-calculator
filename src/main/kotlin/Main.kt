@@ -22,6 +22,7 @@ fun operation(op: String, a: Double, b: Double): Double =
 fun calcMathString(str: String): Double {
     var curr = 0.0
     val list = recursivePunktRechnung(stringToList(str), 0)
+    //println(list)
 
     for (x in list) curr = operation(x.first, curr, x.second)
     return curr
@@ -35,6 +36,15 @@ fun recursivePunktRechnung(list: MutableList<Pair<String, Double>>, index: Int =
         val result = operation(sign, if (list[index].first == "-") list[index].second * -1 else list[index].second, number)
         list[index] = "+" to result
         list.removeAt(index + 1)
+        if (index +1 == list.size-1 && list[list.size-1].first in "*/") { //edgecase of last num needing correction
+            val (signLast, numberLast) = list[index + 1]
+            val resultLast = operation(signLast, if (list[index].first == "-") list[index].second * -1 else list[index].second, numberLast)
+            list[index] = "+" to resultLast
+            list.removeAt(index + 1)
+        } else {
+            recursivePunktRechnung(list, index + 1)
+        }
+    } else {
         recursivePunktRechnung(list, index + 1)
     }
     return list
@@ -55,7 +65,7 @@ fun recursiveResolveBrackets(str: String, currStr: String = "", currIndex: Int =
         when (x) {
             '(' -> {
                 val (count, resolved) = recursiveResolveBrackets(inputString, result, index + 1, currLevel + 1)
-                ignoreCount = count
+                ignoreCount = count + currLevel
                 ignoreTotal = count
                 if (currLevel == 0) {
                     result += resolved
@@ -66,11 +76,13 @@ fun recursiveResolveBrackets(str: String, currStr: String = "", currIndex: Int =
             ')' -> {
                 if (currLevel > 0) {
                     val implant = currBracket
+                    //println("$currLevel : Implant: $implant")
                     return Pair(currBracket.length + ignoreTotal, calcMathString(implant).toString())
                 }
             }
             else -> if (currLevel == 0) result += x else currBracket += x
         }
+        //println("$currLevel : Result: $result")
     }
     return Pair(0, result)
 }
