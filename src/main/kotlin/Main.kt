@@ -28,22 +28,15 @@ fun calcMathString(str: String): Double {
 }
 
 
-fun recursivePunktRechnung(list: MutableList<Pair<String, Double>>, index: Int): MutableList<Pair<String, Double>> {
-    if (index > list.size -2) return list
-    println(list)
-    if (list[index+1].first in "*/") {
-        val number = operation(
-            list[index+1].first,
-            if (list[index].first == "-") list[index].second * -1 else list[index].second,
-            list[index+1].second
-        )
-        val sign = "+"
-        val pair = Pair(sign, number)
+fun recursivePunktRechnung(list: MutableList<Pair<String, Double>>, index: Int = 0): MutableList<Pair<String, Double>> {
+    if (index > list.size - 2) return list
+    if (list[index + 1].first in "*/") {
+        val (sign, number) = list[index + 1]
+        val result = operation(sign, if (list[index].first == "-") list[index].second * -1 else list[index].second, number)
+        list[index] = "+" to result
         list.removeAt(index + 1)
-        list[index] = pair
         recursivePunktRechnung(list, index + 1)
     }
-
     return list
 }
 
@@ -54,40 +47,34 @@ fun recursiveResolveBrackets(str: String, currStr: String = "", currIndex: Int =
     var currBracket = ""
     var ignoreCount = 0
     var ignoreTotal = 0
-    println(inputString)
     for ((index, x) in inputString.withIndex()) {
         if (ignoreCount > 0) {
             ignoreCount--
             continue
         }
-        if (currLevel == 0) println("$currLevel: Result: $result") else println("$currLevel: Bracket: $currBracket")
         when (x) {
             '(' -> {
-                val blub = recursiveResolveBrackets(inputString, result, index + 1, currLevel + 1)
-                ignoreCount = blub.first
-                ignoreTotal = blub.first
-                when {
-                    currLevel == 0 -> {
-                        result += blub.second
-                    }
-                    currLevel > 0 -> {
-                        currBracket += blub.second
-                    }
+                val (count, resolved) = recursiveResolveBrackets(inputString, result, index + 1, currLevel + 1)
+                ignoreCount = count
+                ignoreTotal = count
+                if (currLevel == 0) {
+                    result += resolved
+                } else {
+                    currBracket += resolved
                 }
             }
             ')' -> {
                 if (currLevel > 0) {
                     val implant = currBracket
-                    println("$currLevel: Implant: $implant")
-                    return Pair(currBracket.length + ignoreTotal,calcMathString(implant).toString())
+                    return Pair(currBracket.length + ignoreTotal, calcMathString(implant).toString())
                 }
-
             }
             else -> if (currLevel == 0) result += x else currBracket += x
         }
     }
-    return Pair(0 ,result)
+    return Pair(0, result)
 }
+
 
 
 
@@ -99,7 +86,6 @@ fun stringToList(strInput: String): MutableList<Pair<String, Double>> {
     val str = if (strInput[0].isDigit()) strInput else "0".plus(strInput) // so calculations can start with a negative
     val numbers = str.split("+", "-", "*", "/")
     val signs = str.filter { it == '+' || it == '-' || it == '*' || it == '/'}
-    println(numbers)
     var negativeToGive = ""
     for ((index, number) in numbers.withIndex()) {
         if (number == "") {
